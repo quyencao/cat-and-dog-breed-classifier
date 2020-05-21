@@ -103,12 +103,12 @@ if __name__ == "__main__":
 
     catdog_var = CatDogClassifier(model_folder_name)
     catdog_var.run()
+    catdog_var.mobilenet_run()
 
     camera = cv2.VideoCapture(0)
 
     while True:
         s, i = camera.read()
-        cv2.imwrite('test.jpg', i)
         if s:    # frame captured without any errors
             img = Image.fromarray(i).convert('RGB')
             acc, label = catdog_var.prediction(img)
@@ -118,13 +118,11 @@ if __name__ == "__main__":
             else:
                 accuracy = str((1 - acc) * 100)
 
-            if float(accuracy) > 98:
-                catdog_var.mobilenet_run()
+            if float(accuracy) > 98:     
                 _, acc_mob = catdog_var.mobilenet_prediction(img)
                 acc_mob = str(acc_mob * 100)
                 print("Cat")
             else:
-                catdog_var.mobilenet_run()
                 _, acc_mob = catdog_var.mobilenet_prediction(img)
                 acc_mob = str(acc_mob * 100)
                 if float(acc_mob) > 80:
