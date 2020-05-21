@@ -15,14 +15,12 @@ class CatDogClassifier():
         self.mobilenet_model = None
         self.model_folder_name = model_folder_name
 
-    # Stage 2: Load the pretrained model
     def run(self):
         json_file = os.path.join(self.model_folder_name, 'catanddog_model.json')
         with open(json_file, 'r') as f:
             self.model_json = f.read()
 
         self.model = tf.keras.models.model_from_json(self.model_json)
-        # load weights into new model
         model_file = os.path.join(self.model_folder_name, 'catanddog_model.h5')
         self.model.load_weights(model_file)
 
@@ -32,12 +30,9 @@ class CatDogClassifier():
             self.mobilenet_model_json = f.read()
 
         self.mobilenet_model = tf.keras.models.model_from_json(self.mobilenet_model_json)
-        # load weights into new model
         mobilenet_model_file = os.path.join(self.model_folder_name, 'mobilenet_model.h5')
         self.mobilenet_model.load_weights(mobilenet_model_file)
 
-
-    # call model to predict an image
     def api(self, img):
         IMAGE_SHAPE_2 = (128, 128)
         grace_hopper = img.resize(IMAGE_SHAPE_2)
@@ -61,19 +56,6 @@ class CatDogClassifier():
             return keras.applications.mobilenet.preprocess_input(img_array_expanded_dims)
 
         def decode_predictions(preds, top=5, **kwargs):
-            """Decodes the prediction of an ImageNet model.
-            # Arguments
-                preds: Numpy tensor encoding a batch of predictions.
-                top: Integer, how many top-guesses to return.
-
-            # Returns
-                A list of lists of top class prediction tuples
-                `(class_name, class_description, score)`.
-                One list of tuples per sample in batch input.
-            # Raises
-                ValueError: In case of invalid shape of the `pred` array
-                    (must be 2D).
-            """
             global CLASS_INDEX
 
             if len(preds.shape) != 2 or preds.shape[1] != 1000:
@@ -99,8 +81,8 @@ class CatDogClassifier():
         return results_var[0][0][1], results_var[0][0][2]
 
 if __name__ == "__main__":
-    model_folder_name = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'models')
-    video_path = 0
+    model_folder_name = os.getenv('MODEL_DIRECTORY')
+    video_path = 'imxv4l2src device=/dev/video0 ! video/x-raw,format=I420,width=640,height=480,framerate=30/1 ! appsink'
 
     catdog_var = CatDogClassifier(model_folder_name)
     catdog_var.run()
@@ -110,7 +92,7 @@ if __name__ == "__main__":
 
     while True:
         s, i = camera.read()
-        if s:    # frame captured without any errors
+        if s:
             img = Image.fromarray(i).convert('RGB')
             acc, label = catdog_var.prediction(img)
 
@@ -120,8 +102,6 @@ if __name__ == "__main__":
                 accuracy = str((1 - acc) * 100)
 
             if float(accuracy) > 98:     
-                # _, acc_mob = catdog_var.mobilenet_prediction(img)
-                # acc_mob = str(acc_mob * 100)
                 print("Cat")
             else:
                 _, acc_mob = catdog_var.mobilenet_prediction(img)
