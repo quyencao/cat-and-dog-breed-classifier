@@ -6,6 +6,7 @@ from tensorflow.keras.preprocessing import image
 import os
 import cv2
 import json
+from subprocess import call
 
 class CatDogClassifier():
     def __init__(self, model_folder_name):
@@ -80,6 +81,13 @@ class CatDogClassifier():
         results_var = decode_predictions(predictions)
         return results_var[0][0][1], results_var[0][0][2]
 
+def speak_name(label):
+    if label is None:
+        audio_path = os.path.join(os.getcwd(), "audios", "unknown.wav")
+    else:
+        audio_path = os.path.join(os.getcwd(), "audios", "{label}.wav".format(label=label))
+    call(["aplay", audio_path])
+
 if __name__ == "__main__":
     model_folder_name = os.getenv('MODEL_DIRECTORY')
     video_path = 'imxv4l2src device=/dev/video0 ! video/x-raw,format=I420,width=640,height=480,framerate=30/1 ! appsink'
@@ -101,12 +109,18 @@ if __name__ == "__main__":
             else:
                 accuracy = str((1 - acc) * 100)
 
+            current_label = None
+
             if float(accuracy) > 98:     
-                print("Cat")
+                print("1. {}".format(label))
+                current_label = label.lower()
             else:
                 _, acc_mob = catdog_var.mobilenet_prediction(img)
                 acc_mob = str(acc_mob * 100)
                 if float(acc_mob) > 80:
-                    print("Dog")
+                    print("2. {}".format(label))
+                    current_label = label.lower()
                 else:
                     print("Unknown")
+            
+            speak_name(current_label)
